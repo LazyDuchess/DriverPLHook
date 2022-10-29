@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Driver.h"
-#include "common.h"
+#include "driver_hooks.h"
+#include "hooking.h"
 #include <iostream>
 #include <time.h>
 #include <string>
@@ -9,6 +10,8 @@
 #define MODEL_OFFSET 0x744
 #define MODEL_OFFSET2 0x764
 #define HEALTH_OFFSET 0x684
+#define INCAR_OFFSET 0xFC
+#define CAR_OFFSET 0x688
 
 #define PLAYER_POINTER 0x30C7A0
 #define PLAYER_MONEY_OFFSET 0x884
@@ -26,9 +29,32 @@
 #define WANTED_HIDDEN_OFFSET 0x3C
 #define WANTED_SUSPECTING_OFFSET 0x3B
 
+#define VEHICLE_DAMAGE_OFFSET 0x574
+
 namespace Driver {
 
 	char* modBase;
+
+	void SetModuleBase(char* moduleBase) {
+		modBase = moduleBase;
+		srand(time(NULL));
+		InitializeHooks();
+	}
+
+	cVehicle::cVehicle(DWORD addr)
+	{
+		address = addr;
+	}
+
+	float cVehicle::GetDamage()
+	{
+		return ((float*)(address + VEHICLE_DAMAGE_OFFSET))[0];
+	}
+
+	void cVehicle::SetDamage(float damage)
+	{
+		((float*)(address + VEHICLE_DAMAGE_OFFSET))[0] = damage;
+	}
 
 	cWanted* PlayerWanted;
 
@@ -40,7 +66,7 @@ namespace Driver {
 	cWanted* cWanted::Get()
 	{
 		DWORD addr = (DWORD)modBase + WANTED_POINTER;
-		if (memory_readable((DWORD*)addr, 4))
+		if (Hooking::memory_readable((DWORD*)addr, 4))
 		{
 			memcpy_s(&addr, 4, (DWORD*)addr, 4);
 			if (PlayerWanted != NULL)
@@ -135,7 +161,7 @@ namespace Driver {
 	cPlayer* cPlayer::Get()
 	{
 		DWORD addr = (DWORD)modBase + PLAYER_POINTER;
-		if (memory_readable((DWORD*)addr, 4))
+		if (Hooking::memory_readable((DWORD*)addr, 4))
 		{
 			memcpy_s(&addr, 4, (DWORD*)addr, 4);
 			if (PlayerSingleton != NULL)
@@ -151,11 +177,6 @@ namespace Driver {
 		return NULL;
 	}
 
-	void SetModuleBase(char* moduleBase) {
-		modBase = moduleBase;
-		srand(time(NULL));
-	}
-
 	cPed* PlayerPed;
 
 	cPed::cPed(DWORD addr)
@@ -166,6 +187,23 @@ namespace Driver {
 	cPed::cPed()
 	{
 		address = NULL;
+	}
+
+	cVehicle* cPed::GetVehicle()
+	{
+		DWORD vehicleAddress = ((DWORD*)(address + CAR_OFFSET))[0];
+		if (vehicleAddress == NULL)
+			return NULL;
+		return cVehicleMap[vehicleAddress];
+	}
+
+	bool cPed::InVehicle() 
+	{
+		DWORD vehicleAddress = ((DWORD*)(address + CAR_OFFSET))[0];
+		if (vehicleAddress == NULL)
+			return false;
+		return true;
+		//return ((char*)(address + INCAR_OFFSET))[0] == 1;
 	}
 
 	float cPed::GetHealth()
@@ -213,11 +251,11 @@ namespace Driver {
 	cPed* cPed::GetPlayer()
 	{
 		DWORD addr = (DWORD)modBase + 0x0030C6D8;
-		if (memory_readable((DWORD*)addr, 4))
+		if (Hooking::memory_readable((DWORD*)addr, 4))
 		{
 			memcpy_s(&addr, 4, (DWORD*)addr, 4);
 			addr += 0x1C;
-			if (memory_readable((DWORD*)addr, 4))
+			if (Hooking::memory_readable((DWORD*)addr, 4))
 			{
 				memcpy_s(&addr, 4, (DWORD*)addr, 4);
 				if (PlayerPed != NULL)
@@ -237,11 +275,11 @@ namespace Driver {
 	cPed * cPed::GetPeds()
 	{
 		DWORD addr = (DWORD)modBase + 0x0030C6E0;
-		if (memory_readable((DWORD*)addr, 4))
+		if (Hooking::memory_readable((DWORD*)addr, 4))
 		{
 			memcpy_s(&addr, 4, (DWORD*)addr, 4);
 			addr += 0x31C;
-			if (memory_readable((DWORD*)addr, 4))
+			if (Hooking::memory_readable((DWORD*)addr, 4))
 			{
 				DWORD* pointers = (DWORD*)addr;
 				cPed pedArray[PED_AMOUNT];

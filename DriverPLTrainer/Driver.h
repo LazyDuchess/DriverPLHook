@@ -6,7 +6,25 @@
 #define PED_AMOUNT 48
 
 namespace Driver {
+
+	extern char* modBase;
+
 	void SetModuleBase(char* moduleBase);
+
+	class cVehicle {
+	public:
+		float GetDamage();
+		void SetDamage(float damage);
+		cVehicle(DWORD addr);
+
+		/// <summary>
+		/// Prevents the vehicle from getting damaged from physical impacts.
+		/// </summary>
+		bool CrashProof = false;
+
+	private:
+		DWORD address;
+	};
 
 	class cWanted {
 	public:
@@ -26,14 +44,16 @@ namespace Driver {
 		void SetHidden(bool hidden);
 		void SetSuspecting(bool suspecting);
 
-		DWORD address;
-
 		cWanted(DWORD addr);
+	private:
+		DWORD address;
 	};
 
 	class cPed {
 	public:
 		float GetHealth();
+		bool InVehicle();
+		cVehicle* GetVehicle();
 		void SetHealth(float health);
 		void SetModel(int model);
 		void SetCharacter(int character);
@@ -41,11 +61,12 @@ namespace Driver {
 		int GetCharacter();
 		static cPed* GetPlayer();
 		static cPed* GetPeds();
-		DWORD address;
 		cPed(DWORD addr);
 		cPed();
 		bool operator==(const cPed& other);
 		bool operator!=(const cPed& other);
+	private:
+		DWORD address;
 	};
 
 	class cPlayer {
@@ -53,8 +74,9 @@ namespace Driver {
 		static cPlayer* Get();
 		int GetMoney();
 		void SetMoney(int money);
-		DWORD address;
 		cPlayer(DWORD addr);
+	private:
+		DWORD address;
 	};
 	
 	class Character {

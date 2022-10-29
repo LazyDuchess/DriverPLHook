@@ -75,6 +75,14 @@ void Update()
 
 	if (playerPed != NULL)
 	{
+		//No car damage
+		if (playerPed->InVehicle())
+		{
+			Driver::cVehicle* playerCar = playerPed->GetVehicle();
+			playerCar->CrashProof = true;
+			playerCar->SetDamage(0.0);
+		}
+
 		//No cops
 		if (wantedLevel != NULL)
 			wantedLevel->ClearWantedLevel();
@@ -84,7 +92,17 @@ void Update()
 			playerData->SetMoney(999999);
 
 		//No dying
-		playerPed->SetHealth(999);
+		//playerPed->SetHealth(999);
+
+		//Dunno, just testing. Don't question it.
+		Driver::cPed* allPeds = Driver::cPed::GetPeds();
+		for (int i = 0; i < PED_AMOUNT; i++)
+		{
+			if (allPeds[i] != *playerPed && allPeds[i].InVehicle() && allPeds[i].GetHealth() > 0.01)
+			{
+				allPeds[i].SetHealth(0.01);
+			}
+		}
 
 		/*
 		//Give ourselves a random skin
