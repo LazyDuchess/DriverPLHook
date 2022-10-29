@@ -70,9 +70,17 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 void Update()
 {
 	Driver::cPed* playerPed = Driver::cPed::GetPlayer();
+	Driver::cPlayer* playerData = Driver::cPlayer::Get();
 
 	if (playerPed != NULL)
 	{
+		//Force money to 999999 constantly
+		if (playerData != NULL)
+		{
+			playerData->SetMoney(999999);
+		}
+
+		//Give ourselves a random skin
 		if (playerPed->GetCharacter() == CHARACTER_PLAYER_THEN || playerPed->GetModel() == MODEL_PLAYER_THEN)
 		{
 			Driver::Character* randomChar = Driver::Character::GetRandom();
@@ -80,12 +88,13 @@ void Update()
 			playerPed->SetModel(randomChar->model);
 		}
 
+		//Turn all peds into TK, and give them our HP minus 50.
 		Driver::cPed* allPeds = Driver::cPed::GetPeds();
 		for (int i = 0; i < PED_AMOUNT; i++)
 		{
 			if (allPeds[i].address != playerPed->address)
 			{
-				allPeds[i].SetHealth(playerPed->GetHealth() - 50.0);
+				allPeds[i].SetHealth(playerPed->GetHealth() - 0.5);
 				allPeds[i].SetCharacter(CHARACTER_PLAYER_THEN);
 				allPeds[i].SetModel(MODEL_PLAYER_THEN);
 			}

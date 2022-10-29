@@ -44,6 +44,8 @@ namespace Driver {
 			{
 				if (PlayerSingleton->address == addr)
 					return PlayerSingleton;
+				else
+					delete PlayerSingleton;
 			}
 			PlayerSingleton = new cPlayer(addr);
 			return PlayerSingleton;
@@ -122,6 +124,8 @@ namespace Driver {
 				{
 					if (PlayerPed->address == addr)
 						return PlayerPed;
+					else
+						delete PlayerPed;
 				}
 				PlayerPed = new cPed(addr);
 				return PlayerPed;
