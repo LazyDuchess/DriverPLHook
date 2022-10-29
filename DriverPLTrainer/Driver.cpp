@@ -13,9 +13,107 @@
 #define PLAYER_POINTER 0x30C7A0
 #define PLAYER_MONEY_OFFSET 0x884
 
+#define WANTED_POINTER 0x0030C5C8
+//#define WANTED_WANTED_OFFSET 0x24
+//#define WANTED_SUS_OFFSET 0x28
+//#define WANTED_ENGAGING_OFFSET 0x39
+//#define WANTED_HIDDEN_OFFSET 0x3C
+
+#define WANTED_WANTED_OFFSET 0x24
+#define WANTED_WANTED_OFFSET2 0x20
+#define WANTED_SUS_OFFSET 0x28
+#define WANTED_ENGAGING_OFFSET 0x39
+#define WANTED_HIDDEN_OFFSET 0x3C
+#define WANTED_SUSPECTING_OFFSET 0x3B
+
 namespace Driver {
 
 	char* modBase;
+
+	cWanted* PlayerWanted;
+
+	cWanted::cWanted(DWORD addr)
+	{
+		address = addr;
+	}
+
+	cWanted* cWanted::Get()
+	{
+		DWORD addr = (DWORD)modBase + WANTED_POINTER;
+		if (memory_readable((DWORD*)addr, 4))
+		{
+			memcpy_s(&addr, 4, (DWORD*)addr, 4);
+			if (PlayerWanted != NULL)
+			{
+				if (PlayerWanted->address == addr)
+					return PlayerWanted;
+				else
+					delete PlayerWanted;
+			}
+			PlayerWanted = new cWanted(addr);
+			return PlayerWanted;
+		}
+		return NULL;
+	}
+
+	float cWanted::GetSuspicionLevel()
+	{
+		return ((float*)(address + WANTED_SUS_OFFSET))[0];
+	}
+
+	float cWanted::GetWantedLevel()
+	{
+		return ((float*)(address + WANTED_WANTED_OFFSET))[0];
+	}
+
+	bool cWanted::GetEngaging()
+	{
+		return ((char*)(address + WANTED_ENGAGING_OFFSET))[0] == 1;
+	}
+
+	bool cWanted::GetHidden()
+	{
+		return ((char*)(address + WANTED_HIDDEN_OFFSET))[0] == 1;
+	}
+
+	bool cWanted::GetSuspecting()
+	{
+		return ((char*)(address + WANTED_SUSPECTING_OFFSET))[0] == 1;
+	}
+
+	void cWanted::ClearWantedLevel() {
+		SetSuspicionLevel(0.0);
+		SetWantedLevel(0.0);
+		SetHidden(false);
+		SetEngaging(false);
+		SetSuspecting(false);
+	}
+
+	void cWanted::SetSuspicionLevel(float level)
+	{
+		((float*)(address + WANTED_SUS_OFFSET))[0] = level;
+	}
+
+	void cWanted::SetWantedLevel(float level)
+	{
+		((float*)(address + WANTED_WANTED_OFFSET))[0] = level;
+		((float*)(address + WANTED_WANTED_OFFSET2))[0] = level;
+	}
+
+	void cWanted::SetEngaging(bool engaging)
+	{
+		((char*)(address + WANTED_ENGAGING_OFFSET))[0] = engaging ? 1 : 0;
+	}
+
+	void cWanted::SetHidden(bool hidden)
+	{
+		((char*)(address + WANTED_HIDDEN_OFFSET))[0] = hidden ? 1 : 0;
+	}
+
+	void cWanted::SetSuspecting(bool suspecting)
+	{
+		((char*)(address + WANTED_SUSPECTING_OFFSET))[0] = suspecting ? 1 : 0;
+	}
 
 	cPlayer* PlayerSingleton;
 
@@ -101,15 +199,17 @@ namespace Driver {
 		((int*)(address + MODEL_OFFSET))[0] = model;
 		((int*)(address + MODEL_OFFSET2))[0] = model;
 	}
-	bool cPed::IsPlayer()
-	{
-		cPed* play = GetPlayer();
-		if (play == NULL)
-			return false;
-		if (play->address == address)
+
+	bool cPed::operator==(const cPed& other) {
+		if (address == other.address)
 			return true;
 		return false;
 	}
+
+	bool cPed::operator!=(const cPed& other) {
+		return !(*this == other);
+	}
+
 	cPed* cPed::GetPlayer()
 	{
 		DWORD addr = (DWORD)modBase + 0x0030C6D8;

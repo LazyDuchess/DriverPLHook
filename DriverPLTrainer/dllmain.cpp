@@ -71,15 +71,22 @@ void Update()
 {
 	Driver::cPed* playerPed = Driver::cPed::GetPlayer();
 	Driver::cPlayer* playerData = Driver::cPlayer::Get();
+	Driver::cWanted* wantedLevel = Driver::cWanted::Get();
 
 	if (playerPed != NULL)
 	{
+		//No cops
+		if (wantedLevel != NULL)
+			wantedLevel->ClearWantedLevel();
+
 		//Force money to 999999 constantly
 		if (playerData != NULL)
-		{
 			playerData->SetMoney(999999);
-		}
 
+		//No dying
+		playerPed->SetHealth(999);
+
+		/*
 		//Give ourselves a random skin
 		if (playerPed->GetCharacter() == CHARACTER_PLAYER_THEN || playerPed->GetModel() == MODEL_PLAYER_THEN)
 		{
@@ -92,13 +99,13 @@ void Update()
 		Driver::cPed* allPeds = Driver::cPed::GetPeds();
 		for (int i = 0; i < PED_AMOUNT; i++)
 		{
-			if (allPeds[i].address != playerPed->address)
+			if (allPeds[i] != *playerPed)
 			{
 				allPeds[i].SetHealth(playerPed->GetHealth() - 0.5);
 				allPeds[i].SetCharacter(CHARACTER_PLAYER_THEN);
 				allPeds[i].SetModel(MODEL_PLAYER_THEN);
 			}
-		}
+		}*/
 	}
 }
 

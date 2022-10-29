@@ -7,6 +7,30 @@
 
 namespace Driver {
 	void SetModuleBase(char* moduleBase);
+
+	class cWanted {
+	public:
+		static cWanted* Get();
+
+		float GetSuspicionLevel();
+		float GetWantedLevel();
+		bool GetEngaging();
+		bool GetHidden();
+		bool GetSuspecting();
+
+		void ClearWantedLevel();
+
+		void SetSuspicionLevel(float level);
+		void SetWantedLevel(float level);
+		void SetEngaging(bool engaging);
+		void SetHidden(bool hidden);
+		void SetSuspecting(bool suspecting);
+
+		DWORD address;
+
+		cWanted(DWORD addr);
+	};
+
 	class cPed {
 	public:
 		float GetHealth();
@@ -16,11 +40,12 @@ namespace Driver {
 		int GetModel();
 		int GetCharacter();
 		static cPed* GetPlayer();
-		bool IsPlayer();
 		static cPed* GetPeds();
 		DWORD address;
 		cPed(DWORD addr);
 		cPed();
+		bool operator==(const cPed& other);
+		bool operator!=(const cPed& other);
 	};
 
 	class cPlayer {
