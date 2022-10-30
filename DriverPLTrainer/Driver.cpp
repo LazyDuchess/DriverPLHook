@@ -225,10 +225,10 @@ namespace Driver {
 	/// Damage is in HP - 1.0 is full hp.
 	/// </summary>
 	/// <param name="damage"></param>
-	void cPed::Damage(float damage)
+	void cPed::Damage(float damage, bool unk)
 	{
 		damageFuncAddr = modBase + PED_DAMAGE_FUNC;
-		damageHook(address, damage, 0x1);
+		damageHook(address, damage, unk ? 1 : 0);
 	}
 
 	cVehicle* cPed::GetVehicle()

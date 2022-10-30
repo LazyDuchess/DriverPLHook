@@ -87,7 +87,7 @@ namespace Driver {
 		//static t_pedVector GetPeds();
 		//static cPed* GetPedsBuffer();
 		static cPed* GetPed(int id);
-		void Damage(float damage);
+		void Damage(float damage, bool unk);
 		cPed(DWORD addr);
 		cPed();
 		bool operator==(const cPed& other);
