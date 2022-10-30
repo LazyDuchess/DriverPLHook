@@ -5,12 +5,18 @@
 #include <d3d9.h> 
 #include <d3dx9.h>
 #include "Driver.h"
+#include "driver_hooks.h"
 #include <string>
+#include <iomanip>
+#include <sstream>
+#include <vector>
 #pragma comment(lib, "D3D Hook x86.lib")
 #pragma comment(lib, "d3dx9.lib")
 
 typedef long(__stdcall* tEndScene)(LPDIRECT3DDEVICE9);
+typedef long(__stdcall* tReset)(LPDIRECT3DDEVICE9);
 tEndScene oD3D9EndScene = NULL;
+tReset oD3D9Reset = NULL;
 LPD3DXFONT m_font = NULL;
 
 HMODULE g_Module;
@@ -38,33 +44,105 @@ bool madeFont = false;
 bool startDrawing = false;
 bool consoleDebug = true;
 
+bool debugMode = false;
+
 void Draw(LPDIRECT3DDEVICE9 pDevice)
 {
-	Driver::cPed* playerPed = Driver::cPed::GetPlayer();
-
-	if (playerPed != NULL)
+	if (GetAsyncKeyState(VK_F10) & 0x01)
 	{
-		if (!madeFont)
+		if (m_font != NULL)
 		{
-			HRESULT res = D3DXCreateFont(pDevice, 17, 0, FW_BOLD, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Arial"), &m_font);
-			if (res == S_OK)
-				madeFont = true;
+			m_font->Release();
+			m_font = NULL;
 		}
-		D3DCOLOR fontColor = D3DCOLOR_ARGB(255, 255, 255, 0);
-		RECT rct; //Font
-		rct.left = 40;
-		rct.right = 600;
-		rct.top = 40;
-		rct.bottom = rct.top + 200;
-		std::wstring playerInfoString = L"Player Spawned";
-		playerInfoString.append(L"\nModel: ");
-		playerInfoString.append(std::to_wstring(playerPed->GetModel()));
-		playerInfoString.append(L"\nCharacter: ");
-		playerInfoString.append(std::to_wstring(playerPed->GetCharacter()));
-		if (madeFont)
-			m_font->DrawText(NULL, playerInfoString.c_str(), -1, &rct, 0, fontColor);
+		madeFont = false;
+		debugMode = !debugMode;
+	}
+	if (!debugMode)
+		return;
+	if (!madeFont)
+	{
+		HRESULT res = D3DXCreateFont(pDevice, 17, 0, FW_BOLD, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Arial"), &m_font);
+		if (res == S_OK)
+			madeFont = true;
+	}
+	D3DCOLOR fontColor = D3DCOLOR_ARGB(255, 255, 255, 0);
+	RECT rct; //Font
+	rct.left = 40;
+	rct.right = 1920;
+	rct.top = 40;
+	rct.bottom = rct.top + 1080;
+
+	std::wstring debugStr = L"Ped debug: ";
+
+	Driver::cPed* player = Driver::cPed::GetPlayer();
+
+	for (int i = 0; i < PED_AMOUNT; i++)
+	{
+		Driver::cPed* ped = Driver::cPed::GetPed(i);
+		debugStr.append(L"\n");
+		debugStr.append(std::to_wstring(ped->address));
+		if (ped->address != player->address)
+		{
+			debugStr.append(L" - not the player");
+			ped->Damage(1.0);
+		}
+		if (ped->InVehicle())
+			debugStr.append(L" - in a vehicle.");
 	}
 
+	/*
+	std::wstring debugStr = L"Ped vehicle debug: ";
+	Driver::t_pedVector peds = Driver::cPed::GetPeds();
+	for (Driver::cPed* elem : peds)
+	{
+		if (elem->InVehicle())
+		{
+			debugStr.append(L"\n");
+			debugStr.append(std::to_wstring(elem->address));
+			debugStr.append(L" in vehicle ");
+			debugStr.append(std::to_wstring(elem->GetVehicle()->address));
+		}
+	}*/
+	/*
+	for (int i = 0; i < PED_AMOUNT; i++)
+	{
+		if (peds[i] != NULL)
+		{
+			if (peds[i].address != NULL)
+			{
+				
+				if (peds[i].InVehicle())
+				{
+					debugStr.append(L"\n");
+					debugStr.append(std::to_wstring(i));
+				}
+			}
+		}
+	}*/
+	if (madeFont)
+		m_font->DrawText(NULL, debugStr.c_str(), -1, &rct, 0, fontColor);
+}
+
+int lastModel = -1;
+
+void UpdateBodySnatcher()
+{
+	Driver::cPed* playerPed = Driver::cPed::GetPlayer();
+	Driver::cWanted* wantedLevel = Driver::cWanted::Get();
+	if (playerPed != NULL)
+	{
+		if (lastModel == -1)
+			lastModel = playerPed->GetModel();
+		if (wantedLevel != NULL)
+		{
+			if (!wantedLevel->GetEngaging() && playerPed->GetModel() != lastModel)
+			{
+				wantedLevel->ClearWantedLevel();
+			}
+		}
+		lastModel = playerPed->GetModel();
+	}
 }
 
 void Update()
@@ -73,8 +151,17 @@ void Update()
 	Driver::cPlayer* playerData = Driver::cPlayer::Get();
 	Driver::cWanted* wantedLevel = Driver::cWanted::Get();
 
+	
+
 	if (playerPed != NULL)
 	{
+		/*
+		for (int i = 0; i < PED_AMOUNT; i++)
+		{
+			Driver::cPed* ped = Driver::cPed::GetPed(i);
+			ped->Damage(0.1);
+		}*/
+
 		//No car damage
 		if (playerPed->InVehicle())
 		{
@@ -94,7 +181,22 @@ void Update()
 		//No dying
 		//playerPed->SetHealth(999);
 
+		
+
+		
+
+		/*
+		Driver::t_pedVector peds = Driver::cPed::GetPeds();
+
+		float targetHealth = playerPed->GetHealth() - 0.5;
+
+		for (const auto& elem : peds)
+		{
+			elem->Damage(-1.0);
+		}*/
+
 		//Dunno, just testing. Don't question it.
+		/*
 		Driver::cPed* allPeds = Driver::cPed::GetPeds();
 		for (int i = 0; i < PED_AMOUNT; i++)
 		{
@@ -102,7 +204,7 @@ void Update()
 			{
 				allPeds[i].SetHealth(0.01);
 			}
-		}
+		}*/
 
 		/*
 		//Give ourselves a random skin
@@ -125,6 +227,10 @@ void Update()
 			}
 		}*/
 	}
+
+	
+
+	//Input::Tick();
 }
 
 void ConsoleDebug()
@@ -143,16 +249,36 @@ void ConsoleDebug()
 	}*/
 }
 
+long _stdcall hkD3D9Reset(LPDIRECT3DDEVICE9 pDevice)
+{
+	if (m_font != NULL)
+	{
+		m_font->Release();
+		m_font = NULL;
+		madeFont = false;
+	}
+	return oD3D9Reset(pDevice);
+}
+
 long __stdcall hkD3D9EndScene(LPDIRECT3DDEVICE9 pDevice)
 {
 	Update();
-	if (startDrawing && !consoleDebug)
+	if (startDrawing)
 		Draw(pDevice);
 	if (consoleDebug)
 		ConsoleDebug();
 	return oD3D9EndScene(pDevice);
 }
 
+WNDPROC oWndProc = NULL;
+
+
+LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (debugMode)
+		return false;
+	return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
+}
 
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -187,14 +313,23 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 					d3dInitialized = init_D3D();
 				}
 
-			    methodesHook(42, hkD3D9EndScene, (LPVOID*)&oD3D9EndScene); // hook endscene
 				
+			    methodesHook(42, hkD3D9EndScene, (LPVOID*)&oD3D9EndScene); // hook endscene
+				methodesHook(16, hkD3D9Reset, (LPVOID*)&oD3D9Reset);
+
+				//Wndproc hook doesn't work very well sadly
+
+				/*
+				Sleep(2000);
+				wndProcHook("Driver: Parallel Lines", (LONG_PTR)WndProc, oWndProc); // wndproc hook*/
+
 				while (!bExit)
 				{
 					Sleep(100); // Sleeps until shutdown
 				}
 
 				methodesUnhook(); // disables and removes all hooks
+				wndProcUnhook(oWndProc); // removes wndproc hook
 
 				FreeLibraryAndExitThread(g_Module, 0);
 			}, nullptr, 0, nullptr);

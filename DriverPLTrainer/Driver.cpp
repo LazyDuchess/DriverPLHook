@@ -5,6 +5,7 @@
 #include <iostream>
 #include <time.h>
 #include <string>
+#include <vector>
 
 #define CHARACTER_OFFSET 0x63C
 #define MODEL_OFFSET 0x744
@@ -28,8 +29,11 @@
 #define WANTED_ENGAGING_OFFSET 0x39
 #define WANTED_HIDDEN_OFFSET 0x3C
 #define WANTED_SUSPECTING_OFFSET 0x3B
+#define WANTED_ALERT_OFFSET 0x1C
 
 #define VEHICLE_DAMAGE_OFFSET 0x574
+
+#define PED_DAMAGE_FUNC 0xEC5DD
 
 namespace Driver {
 
@@ -82,6 +86,11 @@ namespace Driver {
 		return NULL;
 	}
 
+	float cWanted::GetAlert()
+	{
+		return ((float*)(address + WANTED_ALERT_OFFSET))[0];
+	}
+
 	float cWanted::GetSuspicionLevel()
 	{
 		return ((float*)(address + WANTED_SUS_OFFSET))[0];
@@ -113,6 +122,12 @@ namespace Driver {
 		SetHidden(false);
 		SetEngaging(false);
 		SetSuspecting(false);
+		SetAlert(0.0);
+	}
+
+	void cWanted::SetAlert(float alert)
+	{
+		((float*)(address + WANTED_ALERT_OFFSET))[0] = alert;
 	}
 
 	void cWanted::SetSuspicionLevel(float level)
@@ -189,12 +204,45 @@ namespace Driver {
 		address = NULL;
 	}
 
+	char* damageFuncAddr;
+
+	__declspec(naked) void damageHook(DWORD address, float damage, char unknown)
+	{
+		__asm {
+			//char
+			push [esp+0x0C]
+			//damage
+			push [esp+0x0C]
+			//native ped class pointer
+			mov ecx,[esp+0x0C]
+			//native damage function
+			call damageFuncAddr
+			ret
+		}
+	}
+
+	/// <summary>
+	/// Damage is in HP - 1.0 is full hp.
+	/// </summary>
+	/// <param name="damage"></param>
+	void cPed::Damage(float damage)
+	{
+		damageFuncAddr = modBase + PED_DAMAGE_FUNC;
+		damageHook(address, damage, 0x1);
+	}
+
 	cVehicle* cPed::GetVehicle()
 	{
 		DWORD vehicleAddress = ((DWORD*)(address + CAR_OFFSET))[0];
 		if (vehicleAddress == NULL)
 			return NULL;
 		return cVehicleMap[vehicleAddress];
+	}
+
+	DWORD cPed::GetVehiclePointer()
+	{
+		DWORD vehicleAddress = ((DWORD*)(address + CAR_OFFSET))[0];
+		return vehicleAddress;
 	}
 
 	bool cPed::InVehicle() 
@@ -250,6 +298,8 @@ namespace Driver {
 
 	cPed* cPed::GetPlayer()
 	{
+		return GetPed(47);
+		/*
 		DWORD addr = (DWORD)modBase + 0x0030C6D8;
 		if (Hooking::memory_readable((DWORD*)addr, 4))
 		{
@@ -269,10 +319,51 @@ namespace Driver {
 				return PlayerPed;
 			}
 		}
+		return NULL;*/
+	}
+
+	t_vehicleVector cVehicle::GetVehicles()
+	{
+		t_vehicleVector vehicleVector = t_vehicleVector();
+		int i = 0;
+		for (const auto& elem : cVehicleMap)
+		{
+			vehicleVector.push_back(elem.second);
+			i++;
+		}
+		return vehicleVector;
+	}
+
+	cPed* cPed::GetPed(int id)
+	{
+		DWORD addr = (DWORD)modBase + 0x0030C6E0;
+		if (Hooking::memory_readable((DWORD*)addr, 4))
+		{
+			memcpy_s(&addr, 4, (DWORD*)addr, 4);
+			addr += 0x31C;
+			if (Hooking::memory_readable((DWORD*)addr, 4))
+			{
+				DWORD* pointer = (DWORD*)addr;
+				DWORD pedAddress = pointer[id];
+				if (pedAddress == NULL)
+					return NULL;
+				if (cPedMap.count(pedAddress))
+				{
+					return cPedMap[pedAddress];
+				}
+				else
+				{
+					cPed* newPed = new cPed(pedAddress);
+					cPedMap[pedAddress] = newPed;
+					return newPed;
+				}
+			}
+		}
 		return NULL;
 	}
 
-	cPed * cPed::GetPeds()
+	/*
+	cPed* cPed::GetPedsBuffer()
 	{
 		DWORD addr = (DWORD)modBase + 0x0030C6E0;
 		if (Hooking::memory_readable((DWORD*)addr, 4))
@@ -282,15 +373,12 @@ namespace Driver {
 			if (Hooking::memory_readable((DWORD*)addr, 4))
 			{
 				DWORD* pointers = (DWORD*)addr;
-				cPed pedArray[PED_AMOUNT];
+				cPed* pedArray[PED_AMOUNT];
 				for (int i = 0; i < PED_AMOUNT; i++)
 				{
-					/*
-					wprintf(std::to_wstring(pointers[i]).c_str());
-					wprintf(L"\n");*/
 					if (pointers[i] != NULL)
 					{
-						pedArray[i] = cPed(pointers[i]);
+						pedArray[i] = new cPed(pointers[i]);
 					}
 					else
 					{
@@ -301,7 +389,48 @@ namespace Driver {
 			}
 		}
 		return NULL;
-	}
+	}*/
+	/*
+	t_pedVector cPed::GetPeds()
+	{
+		t_pedVector pedVector = t_pedVector();
+		//int i = 0;
+		for (const auto& elem : cPedMap)
+		{
+			pedVector.push_back(elem.second);
+			//i++;
+			//elem.first gives you the key (int)
+			//elem.second gives you the mapped element (vector)
+		}
+		return pedVector;
+		
+		DWORD addr = (DWORD)modBase + 0x0030C6E0;
+		if (Hooking::memory_readable((DWORD*)addr, 4))
+		{
+			memcpy_s(&addr, 4, (DWORD*)addr, 4);
+			addr += 0x31C;
+				wprintf(L"Ped list base addr: ");
+				wprintf(std::to_wstring(addr).c_str());
+				wprintf(L"\n");
+				DWORD* pointers = (DWORD*)addr;
+				cPed pedArray[PED_AMOUNT];
+				for (int i = 0; i < PED_AMOUNT; i++)
+				{
+					DWORD ptr = ((DWORD*)(addr))[i];
+					wprintf(L"Ped: ");
+					wprintf(std::to_wstring(ptr).c_str());
+					wprintf(L"\n");
+					if (Hooking::memory_readable((DWORD*)addr, 4))
+						pedArray[i] = cPed(ptr);
+					else
+						pedArray[i] = NULL;
+				}
+				wprintf(L"Done.\n");
+				return pedArray;
+			//}
+		}
+		return NULL;
+	}*/
 
 	Character* characters[]{
 		new Character(173, 49),
