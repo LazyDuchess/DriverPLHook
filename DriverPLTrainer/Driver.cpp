@@ -40,6 +40,9 @@
 
 #define PED_DAMAGE_FUNC 0xEC5DD
 
+//VTABLE
+#define VEHICLE_VTABLE_REPAIR 0x38
+
 namespace Driver {
 
 	char* modBase;
@@ -261,6 +264,21 @@ namespace Driver {
 	{
 		damageFuncAddr = modBase + PED_DAMAGE_FUNC;
 		damageHook(address, damage, unk ? 1 : 0);
+	}
+
+	__declspec(naked) void callVehicleRepair(DWORD address)
+	{
+		__asm {
+			mov ecx, [esp + 0x4]
+			mov eax, [ecx]
+			call[eax + 0x38]
+			ret
+		}
+	}
+
+	void cVehicle::Repair()
+	{
+		callVehicleRepair(address);
 	}
 
 	cVehicle* cPed::GetVehicle()

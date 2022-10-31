@@ -168,6 +168,15 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 		}
 	}
 
+	//repair current car
+	if (Input::KeyPressed(VK_NUMPAD9))
+	{
+		if (playerPed->InVehicle())
+		{
+			playerPed->GetVehicle()->Repair();
+		}
+	}
+
 	std::wstring togglesStr = L"Toggles:\n\n";
 
 	togglesStr.append(L"[Numpad 1] Never Wanted: ");
@@ -186,6 +195,10 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	togglesStr.append(GetWStringForBool(infiniteMoney));
 	togglesStr.append(L"\n");
 
+	togglesStr.append(L"Character: ");
+	togglesStr.append(std::to_wstring(playerPed->GetModel()));
+	togglesStr.append(L"\n");
+
 	std::wstring actionsStr = L"Actions:\n\n";
 
 	actionsStr.append(L"[Numpad 5] Clear Wanted");
@@ -198,6 +211,9 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	actionsStr.append(L"\n");
 
 	actionsStr.append(L"[Numpad 8] Rainbow Car");
+	actionsStr.append(L"\n");
+
+	actionsStr.append(L"[Numpad 9] Repair Car");
 	actionsStr.append(L"\n");
 
 	D3DCOLOR fontColor = D3DCOLOR_ARGB(255, 255, 255, 255);

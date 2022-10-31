@@ -41,6 +41,7 @@ namespace Driver {
 		float GetDamage();
 		void SetDamage(float damage);
 		void Explode();
+		void Repair();
 		cVehicle(DWORD addr);
 
 		/// <summary>

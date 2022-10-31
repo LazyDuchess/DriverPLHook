@@ -11,6 +11,8 @@
 #define PED_CTOR 0xEB6FF
 #define PED_DTOR 0xEB8C2
 
+#define GAME_EXIT 0x20269D
+
 namespace Driver {
 
 	t_vehicleMap cVehicleMap = t_vehicleMap();
@@ -23,6 +25,11 @@ namespace Driver {
 	char* cVehiclereturnDtorHook;
 	//char* returnCrashDamageHook;
 	char* returnCrashHook;
+
+	void _stdcall exitGame()
+	{
+		exit(0);
+	}
 
 	void _stdcall onPedCtor(DWORD address)
 	{
@@ -55,6 +62,14 @@ namespace Driver {
 	}
 
 	char* crashJmp;
+
+	_declspec(naked) void exitHook()
+	{
+		__asm {
+			call exitGame
+			ret
+		}
+	}
 
 	/// <summary>
 	/// Hooks HandleCrash function to add cVehicle.CrashProof functionality.
@@ -244,6 +259,10 @@ namespace Driver {
 
 		Hooking::MakeJMP((BYTE*)modBase + PED_DTOR, (DWORD)cPedDtorHook, 5);
 		cPedReturnDtorHook = (char*)((BYTE*)modBase + PED_DTOR + 5);
+
+		//exit: 7
+
+		Hooking::MakeJMP((BYTE*)modBase + GAME_EXIT, (DWORD)exitHook, 7);
 		
 		/*
 		crashDamageJmp = modBase + 0x19D7EC;
