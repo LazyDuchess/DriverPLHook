@@ -32,6 +32,7 @@ namespace Driver {
 	void _stdcall onPedDtor(DWORD address)
 	{
 		delete cPedMap[address];
+		cPedMap.erase(address);
 	}
 
 	void _stdcall onVehicleCtor(DWORD address)
@@ -42,6 +43,7 @@ namespace Driver {
 	void _stdcall onVehicleDtor(DWORD address)
 	{
 		delete cVehicleMap[address];
+		cVehicleMap.erase(address);
 	}
 
 	bool _stdcall hookVehicleIsCrashProof(DWORD address)
@@ -237,14 +239,12 @@ namespace Driver {
 		Hooking::MakeJMP((BYTE*)modBase + VEHICLE_CRASH, (DWORD)crashHook, 7);
 		returnCrashHook = (char*)((BYTE*)modBase + VEHICLE_CRASH + 7);
 
-		// looks like destructor doesn't get called.
-		/*
 		Hooking::MakeJMP((BYTE*)modBase + PED_CTOR, (DWORD)cPedCtorHook, 6);
 		cPedReturnCtorHook = (char*)((BYTE*)modBase + PED_CTOR + 6);
 
 		Hooking::MakeJMP((BYTE*)modBase + PED_DTOR, (DWORD)cPedDtorHook, 5);
 		cPedReturnDtorHook = (char*)((BYTE*)modBase + PED_DTOR + 5);
-		*/
+		
 		/*
 		crashDamageJmp = modBase + 0x19D7EC;
 

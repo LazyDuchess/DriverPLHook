@@ -32,6 +32,11 @@
 #define WANTED_ALERT_OFFSET 0x1C
 
 #define VEHICLE_DAMAGE_OFFSET 0x574
+#define VEHICLE_EXPLOSION_OFFSET 0x4D0
+
+#define VEHICLE_R_OFFSET 0x8C
+#define VEHICLE_G_OFFSET 0x90
+#define VEHICLE_B_OFFSET 0x94
 
 #define PED_DAMAGE_FUNC 0xEC5DD
 
@@ -43,6 +48,28 @@ namespace Driver {
 		modBase = moduleBase;
 		srand(time(NULL));
 		InitializeHooks();
+	}
+
+	Color::Color(float r, float g, float b)
+	{
+		red = r;
+		green = g;
+		blue = b;
+	}
+
+	void cVehicle::SetColor(Color color)
+	{
+		((float*)(address + VEHICLE_R_OFFSET))[0] = color.red;
+		((float*)(address + VEHICLE_G_OFFSET))[0] = color.green;
+		((float*)(address + VEHICLE_B_OFFSET))[0] = color.blue;
+	}
+
+	Color cVehicle::GetColor()
+	{
+		float r = ((float*)(address + VEHICLE_R_OFFSET))[0];
+		float g = ((float*)(address + VEHICLE_G_OFFSET))[0];
+		float b = ((float*)(address + VEHICLE_B_OFFSET))[0];
+		return Color(r, g, b);
 	}
 
 	cVehicle::cVehicle(DWORD addr)
@@ -58,6 +85,11 @@ namespace Driver {
 	void cVehicle::SetDamage(float damage)
 	{
 		((float*)(address + VEHICLE_DAMAGE_OFFSET))[0] = damage;
+	}
+
+	void cVehicle::Explode()
+	{
+		((float*)(address + VEHICLE_EXPLOSION_OFFSET))[0] = 0.1;
 	}
 
 	cWanted* PlayerWanted;
@@ -119,7 +151,7 @@ namespace Driver {
 	void cWanted::ClearWantedLevel() {
 		SetSuspicionLevel(0.0);
 		SetWantedLevel(0.0);
-		SetHidden(false);
+		//SetHidden(false);
 		SetEngaging(false);
 		SetSuspecting(false);
 		SetAlert(0.0);
@@ -298,8 +330,6 @@ namespace Driver {
 
 	cPed* cPed::GetPlayer()
 	{
-		return GetPed(47);
-		/*
 		DWORD addr = (DWORD)modBase + 0x0030C6D8;
 		if (Hooking::memory_readable((DWORD*)addr, 4))
 		{
@@ -308,6 +338,8 @@ namespace Driver {
 			if (Hooking::memory_readable((DWORD*)addr, 4))
 			{
 				memcpy_s(&addr, 4, (DWORD*)addr, 4);
+				return cPedMap[addr];
+				/*
 				if (PlayerPed != NULL)
 				{
 					if (PlayerPed->address == addr)
@@ -316,10 +348,22 @@ namespace Driver {
 						delete PlayerPed;
 				}
 				PlayerPed = new cPed(addr);
-				return PlayerPed;
+				return PlayerPed;*/
 			}
 		}
-		return NULL;*/
+		return NULL;
+	}
+
+	t_pedVector cPed::GetPeds()
+	{
+		t_pedVector pedVector = t_pedVector();
+		int i = 0;
+		for (const auto& elem : cPedMap)
+		{
+			pedVector.push_back(elem.second);
+			i++;
+		}
+		return pedVector;
 	}
 
 	t_vehicleVector cVehicle::GetVehicles()
@@ -333,7 +377,7 @@ namespace Driver {
 		}
 		return vehicleVector;
 	}
-
+	/*
 	cPed* cPed::GetPed(int id)
 	{
 		DWORD addr = (DWORD)modBase + 0x0030C6E0;
@@ -360,6 +404,30 @@ namespace Driver {
 			}
 		}
 		return NULL;
+	}*/
+
+	Color get_rainbow(UINT offset)
+	{
+		UINT64 cnt = GetTickCount64();
+		constexpr double freq = .0025;
+		constexpr double mul = 2.0;
+
+		Color color = Color(
+			std::sin(freq * cnt + 0 + offset) * mul,
+			std::sin(freq * cnt + 2 + offset) * mul,
+			std::sin(freq * cnt + 4 + offset) * mul
+		);
+		return color;
+	}
+
+	void Tick()
+	{
+		t_vehicleVector vehicles = cVehicle::GetVehicles();
+		for (auto& elem : vehicles)
+		{
+			if (elem->Rainbow)
+				elem->SetColor(get_rainbow(elem->address));
+		}
 	}
 
 	/*

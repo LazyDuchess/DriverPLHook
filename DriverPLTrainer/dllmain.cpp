@@ -10,13 +10,16 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include "Input.h"
 #pragma comment(lib, "D3D Hook x86.lib")
 #pragma comment(lib, "d3dx9.lib")
 
 typedef long(__stdcall* tEndScene)(LPDIRECT3DDEVICE9);
 typedef long(__stdcall* tReset)(LPDIRECT3DDEVICE9);
+typedef long(__stdcall* tPresent)(LPDIRECT3DDEVICE9);
 tEndScene oD3D9EndScene = NULL;
 tReset oD3D9Reset = NULL;
+tPresent oD3D9Present = NULL;
 LPD3DXFONT m_font = NULL;
 
 HMODULE g_Module;
@@ -79,7 +82,7 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	Driver::cPed* playerPed = Driver::cPed::GetPlayer();
 	if (playerPed == NULL)
 		return;
-	if (GetAsyncKeyState(VK_F10) & 0x01)
+	if (Input::KeyPressed(VK_F10))
 	{
 		if (m_font != NULL)
 		{
@@ -100,57 +103,68 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	}
 
 	//never wanted
-	if (GetAsyncKeyState(VK_NUMPAD1) & 0x01)
+	if (Input::KeyPressed(VK_NUMPAD1))
 	{
 		neverWanted = !neverWanted;
 	}
 
 	//never die
-	if (GetAsyncKeyState(VK_NUMPAD2) & 0x01)
+	if (Input::KeyPressed(VK_NUMPAD2))
 	{
 		neverDie = !neverDie;
 	}
 
 	//indestructible car
-	if (GetAsyncKeyState(VK_NUMPAD3) & 0x01)
+	if (Input::KeyPressed(VK_NUMPAD3))
 	{
 		indestructibleCar = !indestructibleCar;
 	}
 
 	//infinite money
-	if (GetAsyncKeyState(VK_NUMPAD4) & 0x01)
+	if (Input::KeyPressed(VK_NUMPAD4))
 	{
 		infiniteMoney = !infiniteMoney;
 	}
 
 	//clear wanted
-	if (GetAsyncKeyState(VK_NUMPAD5) & 0x01)
+	if (Input::KeyPressed(VK_NUMPAD5))
 	{
 		Driver::cWanted* pWanted = Driver::cWanted::Get();
 		pWanted->ClearWantedLevel();
 	}
 
 	//kill everyone
-	if (GetAsyncKeyState(VK_NUMPAD6) & 0x01)
+	if (Input::KeyPressed(VK_NUMPAD6))
 	{
-		for (int i = 0; i < PED_AMOUNT; i++)
+		Driver::t_pedVector peds = Driver::cPed::GetPeds();
+		for (auto& elem : peds)
 		{
-			Driver::cPed* ped = Driver::cPed::GetPed(i);
-			if (ped != playerPed)
-				ped->Damage(10.0, false);
+			if (elem != playerPed)
+				elem->Damage(10.0, false);
 		}
 	}
 
 	//wreck ped cars
-	if (GetAsyncKeyState(VK_NUMPAD7) & 0x01)
+	if (Input::KeyPressed(VK_NUMPAD7))
 	{
-		for (int i = 0; i < PED_AMOUNT; i++)
+		Driver::t_vehicleVector vehicles = Driver::cVehicle::GetVehicles();
+		for (auto& elem : vehicles)
 		{
-			Driver::cPed* ped = Driver::cPed::GetPed(i);
-			if (ped != playerPed && ped->InVehicle())
+			if (playerPed->InVehicle())
 			{
-				ped->GetVehicle()->SetDamage(100.0);
+				if (playerPed->GetVehicle()->address == elem->address)
+					continue;
 			}
+			elem->Explode();
+		}
+	}
+
+	//rainbow current car
+	if (Input::KeyPressed(VK_NUMPAD8))
+	{
+		if (playerPed->InVehicle())
+		{
+			playerPed->GetVehicle()->Rainbow = true;
 		}
 	}
 
@@ -180,7 +194,10 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	actionsStr.append(L"[Numpad 6] Kill Everyone");
 	actionsStr.append(L"\n");
 
-	actionsStr.append(L"[Numpad 7] Wreck Ped Cars");
+	actionsStr.append(L"[Numpad 7] Blow Up Nearby Cars");
+	actionsStr.append(L"\n");
+
+	actionsStr.append(L"[Numpad 8] Rainbow Car");
 	actionsStr.append(L"\n");
 
 	D3DCOLOR fontColor = D3DCOLOR_ARGB(255, 255, 255, 255);
@@ -200,6 +217,13 @@ void Update()
 	Driver::cPed* playerPed = Driver::cPed::GetPlayer();
 	Driver::cPlayer* playerData = Driver::cPlayer::Get();
 	Driver::cWanted* wantedLevel = Driver::cWanted::Get();
+
+	if (Input::KeyDown(VK_MENU) && Input::KeyDown(VK_F4))
+	{
+		exit(0);
+	}
+
+	Driver::Tick();
 
 	if (playerPed != NULL)
 	{
@@ -240,6 +264,15 @@ void Update()
 	}
 }
 
+//endscene gets called more than once per frame, causing the mod to be drawn on top of the minimap otherwise
+bool drawnThisFrame = false;
+
+long _stdcall hkD3D9Present(LPDIRECT3DDEVICE9 pDevice)
+{
+	drawnThisFrame = false;
+	return oD3D9Present(pDevice);
+}
+
 long _stdcall hkD3D9Reset(LPDIRECT3DDEVICE9 pDevice)
 {
 	if (m_font != NULL)
@@ -253,8 +286,11 @@ long _stdcall hkD3D9Reset(LPDIRECT3DDEVICE9 pDevice)
 
 long __stdcall hkD3D9EndScene(LPDIRECT3DDEVICE9 pDevice)
 {
+	if (drawnThisFrame)
+		return oD3D9EndScene(pDevice);
 	Update();
 	Draw(pDevice);
+	drawnThisFrame = true;
 	return oD3D9EndScene(pDevice);
 }
 
@@ -281,6 +317,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 				
 			    methodesHook(42, hkD3D9EndScene, (LPVOID*)&oD3D9EndScene); // hook endscene
 				methodesHook(16, hkD3D9Reset, (LPVOID*)&oD3D9Reset);
+				methodesHook(17, hkD3D9Present, (LPVOID*)&oD3D9Present);
 
 				while (!bExit)
 				{

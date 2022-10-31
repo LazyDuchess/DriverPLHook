@@ -10,6 +10,8 @@ namespace Driver {
 
 	extern char* modBase;
 
+	void Tick();
+
 	/// <summary>
 	/// Sets the base module address and initializes the API.
 	/// </summary>
@@ -20,20 +22,35 @@ namespace Driver {
 
 	typedef std::vector<cVehicle*> t_vehicleVector;
 
+	struct Color {
+	public:
+		float red;
+		float green;
+		float blue;
+		Color(float r, float g, float b);
+	};
+
 	/// <summary>
 	/// A vehicle.
 	/// </summary>
 	class cVehicle {
 	public:
 		static t_vehicleVector GetVehicles();
+		void SetColor(Color color);
+		Color GetColor();
 		float GetDamage();
 		void SetDamage(float damage);
+		void Explode();
 		cVehicle(DWORD addr);
 
 		/// <summary>
 		/// Prevents the vehicle from getting damaged from physical impacts.
 		/// </summary>
 		bool CrashProof = false;
+		/// <summary>
+		/// Makes car constantly change color.
+		/// </summary>
+		bool Rainbow = false;
 		DWORD address;
 	};
 
@@ -84,9 +101,9 @@ namespace Driver {
 		int GetModel();
 		int GetCharacter();
 		static cPed* GetPlayer();
-		//static t_pedVector GetPeds();
+		static t_pedVector GetPeds();
 		//static cPed* GetPedsBuffer();
-		static cPed* GetPed(int id);
+		//static cPed* GetPed(int id);
 		void Damage(float damage, bool unk);
 		cPed(DWORD addr);
 		cPed();
