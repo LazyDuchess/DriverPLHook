@@ -166,8 +166,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Driver.cpp" />
+    <ClCompile Include="driver_base.cpp" />
+    <ClCompile Include="driver_ped.cpp" />
     <ClCompile Include="driver_hooks.cpp" />
+    <ClCompile Include="driver_vehicle.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

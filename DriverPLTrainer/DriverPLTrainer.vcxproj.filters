@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Driverhook">
+      <UniqueIdentifier>{866ccd0a-8dc4-48ee-ab9b-1405f43ea950}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Driverhook">
+      <UniqueIdentifier>{c889ee77-24ff-4c57-b6df-81432dafac8f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -24,14 +30,14 @@
     <ClInclude Include="D3DHook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Driver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="driver_hooks.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Input.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Driver.h">
+      <Filter>Header Files\Driverhook</Filter>
+    </ClInclude>
+    <ClInclude Include="driver_hooks.h">
+      <Filter>Header Files\Driverhook</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -41,14 +47,20 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Driver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="driver_hooks.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Input.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="driver_base.cpp">
+      <Filter>Source Files\Driverhook</Filter>
+    </ClCompile>
+    <ClCompile Include="driver_hooks.cpp">
+      <Filter>Source Files\Driverhook</Filter>
+    </ClCompile>
+    <ClCompile Include="driver_ped.cpp">
+      <Filter>Source Files\Driverhook</Filter>
+    </ClCompile>
+    <ClCompile Include="driver_vehicle.cpp">
+      <Filter>Source Files\Driverhook</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
