@@ -8,7 +8,6 @@ namespace Driver {
 	typedef std::vector<cVehicle*> t_vehicleVector;
 	extern t_vehicleMap cVehicleMap;
 	extern t_pedMap cPedMap;
-	extern t_vehicleVector cVehicleVector;
 
 	/// <summary>
 	/// Initializes all hooks into game code, to enable extra functionality.
