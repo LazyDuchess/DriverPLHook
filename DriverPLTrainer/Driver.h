@@ -134,6 +134,11 @@ namespace Driver {
 		cPed();
 		bool operator==(const cPed& other);
 		bool operator!=(const cPed& other);
+		/// <summary>
+		/// If set to true, game will handle death events as normal (Player death will trigger slomo and game over menu, enemy deaths will remove blips from maps, etc.)
+		/// Can be set to false if you wish to handle these situations yourself for any reason.
+		/// </summary>
+		bool HandleDeath = true;
 		DWORD address;
 	};
 

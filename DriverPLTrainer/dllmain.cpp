@@ -177,12 +177,28 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 		}
 	}
 
+	Driver::cUINotification* uiNotif = Driver::cUINotification::Get();
+
 	if (Input::KeyPressed(VK_NUMPAD0))
 	{
-		Driver::cUINotification* uiNotif = Driver::cUINotification::Get();
 		if (uiNotif != NULL)
 		{
 			uiNotif->Show("Hello! This is a notification :)", 5.0);
+		}
+	}
+
+	//heal everyone
+	if (Input::KeyPressed(VK_ADD))
+	{
+		Driver::t_pedVector peds = Driver::cPed::GetPeds();
+		for (auto& elem : peds)
+		{
+			if (elem != playerPed)
+				elem->SetHealth(1.0);
+		}
+		if (uiNotif != NULL)
+		{
+			uiNotif->Show("Healed all NPCs", 2.0);
 		}
 	}
 
@@ -232,6 +248,9 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	actionsStr.append(L"[Numpad 0] Test Notification");
 	actionsStr.append(L"\n");
 
+	actionsStr.append(L"[+] Heal Everyone");
+	actionsStr.append(L"\n");
+
 	D3DCOLOR fontColor = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	int textX = 20;
@@ -244,7 +263,7 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	}
 }
 
-bool setChar = false;
+//bool setChar = false;
 
 void Update()
 {
@@ -258,7 +277,7 @@ void Update()
 	}
 
 	Driver::Tick();
-
+	/*
 	if (playerPed != NULL)
 	{
 		if (!setChar)
@@ -269,7 +288,7 @@ void Update()
 	}
 	else
 		setChar = false;
-
+		*/
 	if (playerPed != NULL)
 	{
 		//No car damage
@@ -305,7 +324,10 @@ void Update()
 		{
 			//No dying
 			playerPed->SetHealth(2.0);
+			playerPed->HandleDeath = false;
 		}
+		else
+			playerPed->HandleDeath = true;
 	}
 }
 

@@ -16,6 +16,8 @@
 #define UI_NOTIF_CTOR 0x72E6C
 #define UI_NOTIF_MOV_ADDR 0x2431D0
 
+#define HANDLEDEATH_HOOK_OFFSET 0xE7DD7
+
 namespace Driver {
 
 	cUINotification* cUINotifSingleton;
@@ -28,6 +30,33 @@ namespace Driver {
 	void _stdcall onUINotifCtor(DWORD address)
 	{
 		cUINotifSingleton = new cUINotification(address);
+	}
+
+	bool _stdcall hookShouldHandleDeath(DWORD address)
+	{
+		cPed* pedEx = cPedMap[address];
+		if (!pedEx->HandleDeath)
+			return false;
+		return true;
+	}
+
+	//Replacing 9 bytes in this one, all the way to the end.
+	__declspec(naked) void cPedDeathGameOverHook()
+	{
+		__asm {
+			jp Parity
+			push ecx
+			call hookShouldHandleDeath
+			cmp al, 0x1
+			jne Parity
+			xor eax, eax
+			inc eax
+			ret
+
+			Parity:
+			xor eax, eax
+			ret
+		}
 	}
 
 	char* cUINotificationReturnCtorHook;
@@ -316,6 +345,7 @@ namespace Driver {
 		cUINotificationMovAddr = (char*)((BYTE*)modBase + UI_NOTIF_MOV_ADDR);
 		cUINotificationReturnCtorHook = (char*)((BYTE*)modBase + UI_NOTIF_CTOR + 10);
 		
+		Hooking::MakeJMP((BYTE*)modBase + HANDLEDEATH_HOOK_OFFSET, (DWORD)cPedDeathGameOverHook, 9);
 		/*
 		crashDamageJmp = modBase + 0x19D7EC;
 
