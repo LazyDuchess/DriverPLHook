@@ -57,8 +57,8 @@ namespace Driver {
 		damageHook(address, damage, unk ? 1 : 0);
 	}
 
-	//TODO - adding vehicles to the map here is not ideal, but's been put as a workaround for a crash in the Steal to Order sidemission
-	//related to the tow truck not calling the hooked constructor that puts it in the vehiclemap.
+	//TODO - adding vehicles to the map here is not ideal, but's been put as a workaround for a crash in the Steal to Order side mission.
+	//Related to the tow truck not calling the hooked constructor that puts it in the vehiclemap.
 	cVehicle* cPed::GetVehicle()
 	{
 		DWORD vehicleAddress = ((DWORD*)(address + CAR_OFFSET))[0];
