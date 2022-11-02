@@ -18,6 +18,19 @@ namespace Driver {
 	/// <param name="moduleBase">DriverParallelLines.exe address in memory.</param>
 	void SetModuleBase(char* moduleBase);
 
+	class cUINotification;
+
+	class cUINotification {
+	public:
+		static cUINotification* Get();
+		void Clear();
+		void Show(LPCSTR text);
+		void Show(LPCSTR text, float duration);
+		cUINotification(DWORD addr);
+	private:
+		DWORD address;
+	};
+
 	class cVehicle;
 
 	typedef std::vector<cVehicle*> t_vehicleVector;

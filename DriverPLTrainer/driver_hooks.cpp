@@ -13,7 +13,55 @@
 
 #define GAME_EXIT 0x20269D
 
+#define UI_NOTIF_CTOR 0x72E6C
+#define UI_NOTIF_MOV_ADDR 0x2431D0
+
 namespace Driver {
+
+	cUINotification* cUINotifSingleton;
+
+	cUINotification* cUINotification::Get()
+	{
+		return cUINotifSingleton;
+	}
+
+	void _stdcall onUINotifCtor(DWORD address)
+	{
+		cUINotifSingleton = new cUINotification(address);
+	}
+
+	char* cUINotificationReturnCtorHook;
+	char* cUINotificationMovAddr;
+
+	__declspec(naked) void cUINotifCtorHook()
+	{
+		__asm {
+			push edi
+			push eax
+			push edx
+			push ecx
+			push ebx
+			push esi
+
+			push ecx
+			call onUINotifCtor
+
+			pop esi
+			pop ebx
+			pop ecx
+			pop edx
+			pop eax
+			pop edi
+
+			push esi
+			mov esi, ecx
+			push eax
+			mov eax, cUINotificationMovAddr
+			mov[esi + 0x4], eax
+			pop eax
+			jmp cUINotificationReturnCtorHook
+		}
+	}
 
 	t_vehicleMap cVehicleMap = t_vehicleMap();
 	t_pedMap cPedMap = t_pedMap();
@@ -263,6 +311,10 @@ namespace Driver {
 		//exit: 7
 
 		Hooking::MakeJMP((BYTE*)modBase + GAME_EXIT, (DWORD)exitHook, 7);
+
+		Hooking::MakeJMP((BYTE*)modBase + UI_NOTIF_CTOR, (DWORD)cUINotifCtorHook, 10);
+		cUINotificationMovAddr = (char*)((BYTE*)modBase + UI_NOTIF_MOV_ADDR);
+		cUINotificationReturnCtorHook = (char*)((BYTE*)modBase + UI_NOTIF_CTOR + 10);
 		
 		/*
 		crashDamageJmp = modBase + 0x19D7EC;

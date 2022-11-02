@@ -177,6 +177,15 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 		}
 	}
 
+	if (Input::KeyPressed(VK_NUMPAD0))
+	{
+		Driver::cUINotification* uiNotif = Driver::cUINotification::Get();
+		if (uiNotif != NULL)
+		{
+			uiNotif->Show("Hello! This is a notification :)", 5.0);
+		}
+	}
+
 	std::wstring togglesStr = L"Toggles:\n\n";
 
 	togglesStr.append(L"[Numpad 1] Never Wanted: ");
@@ -195,8 +204,12 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	togglesStr.append(GetWStringForBool(infiniteMoney));
 	togglesStr.append(L"\n");
 
-	togglesStr.append(L"Character: ");
+	togglesStr.append(L"Skin: ");
 	togglesStr.append(std::to_wstring(playerPed->GetModel()));
+	togglesStr.append(L"\n");
+
+	togglesStr.append(L"Animations: ");
+	togglesStr.append(std::to_wstring(playerPed->GetCharacter()));
 	togglesStr.append(L"\n");
 
 	std::wstring actionsStr = L"Actions:\n\n";
@@ -216,6 +229,9 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	actionsStr.append(L"[Numpad 9] Repair Car");
 	actionsStr.append(L"\n");
 
+	actionsStr.append(L"[Numpad 0] Test Notification");
+	actionsStr.append(L"\n");
+
 	D3DCOLOR fontColor = D3DCOLOR_ARGB(255, 255, 255, 255);
 
 	int textX = 20;
@@ -227,6 +243,8 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 		DrawTxtShadow(m_font, actionsStr.c_str(), fontColor, textX, textY);
 	}
 }
+
+bool setChar = false;
 
 void Update()
 {
@@ -240,6 +258,17 @@ void Update()
 	}
 
 	Driver::Tick();
+
+	if (playerPed != NULL)
+	{
+		if (!setChar)
+		{
+			playerPed->SetModel(203);
+			setChar = true;
+		}
+	}
+	else
+		setChar = false;
 
 	if (playerPed != NULL)
 	{

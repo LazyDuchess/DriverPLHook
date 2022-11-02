@@ -169,6 +169,7 @@
     <ClCompile Include="driver_base.cpp" />
     <ClCompile Include="driver_ped.cpp" />
     <ClCompile Include="driver_hooks.cpp" />
+    <ClCompile Include="driver_ui.cpp" />
     <ClCompile Include="driver_vehicle.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="pch.cpp">
