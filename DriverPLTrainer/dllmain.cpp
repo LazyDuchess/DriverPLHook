@@ -202,6 +202,11 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 		}
 	}
 
+	if (Input::KeyPressed(VK_SUBTRACT))
+	{
+		Driver::DrawHUD = !Driver::DrawHUD;
+	}
+
 	std::wstring togglesStr = L"Toggles:\n\n";
 
 	togglesStr.append(L"[Numpad 1] Never Wanted: ");
@@ -218,6 +223,10 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 
 	togglesStr.append(L"[Numpad 4] Infinite Money: ");
 	togglesStr.append(GetWStringForBool(infiniteMoney));
+	togglesStr.append(L"\n");
+
+	togglesStr.append(L"[-] HUD: ");
+	togglesStr.append(GetWStringForBool(Driver::DrawHUD));
 	togglesStr.append(L"\n");
 
 	togglesStr.append(L"Skin: ");

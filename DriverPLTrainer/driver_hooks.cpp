@@ -18,7 +18,56 @@
 
 #define HANDLEDEATH_HOOK_OFFSET 0xE7DD7
 
+#define UI_MINIMAP_DRAW_HOOK_OFFSET 0xB9F0F
+
+#define GENERAL_UI_DRAW_HOOK_OFFSET 0x14FC40
+#define GENERAL_UI_DRAW_HOOK_JNE_OFFSET 0x14FC32
+
 namespace Driver {
+	char* GeneralUIJNE;
+	char* GeneralUIReturnDrawHook;
+	//Replacing 6 bytes in this one. Hook to skip drawing most UI if UI disabled.
+	__declspec(naked) void GeneralUIDrawHook()
+	{
+		__asm {
+			jne ElseLabel
+			jmp OutLabel
+
+			OutLabel:
+				mov edi, ebx
+				lea esi,[ebp+0x0C]
+				jmp GeneralUIReturnDrawHook
+
+			ElseLabel:
+				cmp DrawHUD, 0
+				jne NotEqualLabel
+				jmp OutLabel
+
+			NotEqualLabel:
+				jmp GeneralUIJNE
+		}
+	}
+
+	char* cUIMinimapReturnDrawHook;
+	//Replacing 6 bytes in this one. Hook to skip drawing minimap if UI disabled.
+	__declspec(naked) void cUIMinimapDrawHook()
+	{
+		__asm {
+			cmp DrawHUD, 0
+			je TrueLabel
+			mov eax,[ebp+0x08]
+			cmp eax,[ebx+0x34]
+			jmp cUIMinimapReturnDrawHook
+
+			TrueLabel:
+			pop edi
+				pop esi
+				pop ebx
+				mov esp, ebp
+				pop ebp
+				ret 0x0004
+		}
+	}
 
 	cUINotification* cUINotifSingleton;
 
@@ -346,6 +395,13 @@ namespace Driver {
 		cUINotificationReturnCtorHook = (char*)((BYTE*)modBase + UI_NOTIF_CTOR + 10);
 		
 		Hooking::MakeJMP((BYTE*)modBase + HANDLEDEATH_HOOK_OFFSET, (DWORD)cPedDeathGameOverHook, 9);
+
+		Hooking::MakeJMP((BYTE*)modBase + UI_MINIMAP_DRAW_HOOK_OFFSET, (DWORD)cUIMinimapDrawHook, 6);
+		cUIMinimapReturnDrawHook = (char*)((BYTE*)modBase + UI_MINIMAP_DRAW_HOOK_OFFSET + 6);
+		
+		Hooking::MakeJMP((BYTE*)modBase + GENERAL_UI_DRAW_HOOK_OFFSET, (DWORD)GeneralUIDrawHook, 7);
+		GeneralUIReturnDrawHook = (char*)((BYTE*)modBase + GENERAL_UI_DRAW_HOOK_OFFSET + 7);
+		GeneralUIJNE = (char*)((BYTE*)modBase + GENERAL_UI_DRAW_HOOK_JNE_OFFSET);
 		/*
 		crashDamageJmp = modBase + 0x19D7EC;
 

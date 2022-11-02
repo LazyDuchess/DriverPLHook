@@ -10,6 +10,11 @@ namespace Driver {
 
 	extern char* modBase;
 
+	/// <summary>
+	/// Should the in-game HUD be drawn?
+	/// </summary>
+	extern bool DrawHUD;
+
 	void Tick();
 
 	/// <summary>

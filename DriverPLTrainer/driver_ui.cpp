@@ -11,6 +11,8 @@
 
 namespace Driver {
 
+	bool DrawHUD = true;
+
 	//The way I'm getting this to work atm is a bit of a smelly hack, but shouldn't cause any issues.
 	char customString[STRING_MAX_LENGTH];
 
