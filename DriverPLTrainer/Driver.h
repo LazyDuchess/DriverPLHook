@@ -55,6 +55,8 @@ namespace Driver {
 		void SetDamage(float damage);
 		void Explode();
 		void Repair();
+		bool operator==(const cVehicle& other);
+		bool operator!=(const cVehicle& other);
 		cVehicle(DWORD addr);
 
 		/// <summary>

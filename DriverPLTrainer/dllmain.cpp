@@ -152,7 +152,7 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 		{
 			if (playerPed->InVehicle())
 			{
-				if (playerPed->GetVehicle()->address == elem->address)
+				if (playerPed->GetVehicle() == elem)
 					continue;
 			}
 			elem->Explode();

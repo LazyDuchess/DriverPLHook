@@ -67,6 +67,16 @@ namespace Driver {
 		}
 	}
 
+	bool cVehicle::operator==(const cVehicle& other) {
+		if (address == other.address)
+			return true;
+		return false;
+	}
+
+	bool cVehicle::operator!=(const cVehicle& other) {
+		return !(*this == other);
+	}
+
 	void cVehicle::Repair()
 	{
 		callVehicleRepair(address);
