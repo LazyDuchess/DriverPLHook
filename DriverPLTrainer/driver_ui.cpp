@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "Driver.h"
 #include "hooking.h"
-#define UI_NOTIF_TEST 0x72C34
-#define UI_NOTIF2 0x72E48
+#define UI_NOTIFY_OFFSET 0x72C34
+//#define UI_NOTIF2 0x72E48
 #define UI_CLEAR 0x72DA2
 
 #define CUSTOM_STRING_OFFSET 0x2445CC
@@ -11,7 +11,8 @@
 
 namespace Driver {
 
-	char customString[STRING_MAX_LENGTH] = "Hey boy!";
+	//The way I'm getting this to work atm is a bit of a smelly hack, but shouldn't cause any issues.
+	char customString[STRING_MAX_LENGTH];
 
 	cUINotification::cUINotification(DWORD addr)
 	{
@@ -29,9 +30,9 @@ namespace Driver {
 			ret
 		}
 	}
-
-	char* notifTest2Addr;
 	/*
+	char* notifTest2Addr;
+	
 	__declspec(naked) void callUINotifTest2(DWORD address)
 	{
 		__asm {
@@ -46,7 +47,7 @@ namespace Driver {
 		}
 	}*/
 
-	char* notifTestAddr;
+	char* notifyAddr;
 
 	__declspec(naked) void callUINotifTest(DWORD address, float duration)
 	{
@@ -70,7 +71,7 @@ namespace Driver {
 			push 0x10000000
 			push 0x00000000
 			push 0x00000000
-			call notifTestAddr
+			call notifyAddr
 			ret
 		}
 	}
@@ -94,9 +95,8 @@ namespace Driver {
 
 	void cUINotification::Show(LPCSTR text, float duration)
 	{
-		notifClearAddr = modBase + UI_CLEAR;
-		notifTestAddr = modBase + UI_NOTIF_TEST;
-		callUINotifClear(address);
+		notifyAddr = modBase + UI_NOTIFY_OFFSET;
+		Clear();
 		ZeroMemory(customString, STRING_MAX_LENGTH);
 		memcpy_s(customString, STRING_MAX_LENGTH, text, strlen(text));
 		HookCustomString();

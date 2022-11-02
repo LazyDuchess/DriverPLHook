@@ -20,9 +20,15 @@ namespace Driver {
 
 	class cUINotification;
 
+	/// <summary>
+	/// Displays UI notifications on the top half of the screen.
+	/// </summary>
 	class cUINotification {
 	public:
 		static cUINotification* Get();
+		/// <summary>
+		/// Remove any currently displayed notification.
+		/// </summary>
 		void Clear();
 		void Show(LPCSTR text);
 		void Show(LPCSTR text, float duration);
@@ -35,6 +41,9 @@ namespace Driver {
 
 	typedef std::vector<cVehicle*> t_vehicleVector;
 
+	/// <summary>
+	/// Represents a normalized RGB color.
+	/// </summary>
 	struct Color {
 	public:
 		float red;
@@ -44,7 +53,7 @@ namespace Driver {
 	};
 
 	/// <summary>
-	/// A vehicle.
+	/// A physics-enabled (not on rails) vehicle.
 	/// </summary>
 	class cVehicle {
 	public:
