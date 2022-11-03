@@ -76,6 +76,8 @@ bool neverWanted = false;
 bool neverDie = false;
 bool indestructibleCar = false;
 bool infiniteMoney = false;
+bool photoMode = false;
+bool hideHUD = false;
 
 void Draw(LPDIRECT3DDEVICE9 pDevice)
 {
@@ -204,7 +206,36 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 
 	if (Input::KeyPressed(VK_SUBTRACT))
 	{
-		Driver::DrawHUD = !Driver::DrawHUD;
+		if (!hideHUD)
+		{
+			Driver::EnableOverlays(false);
+			Driver::EnableOverheadMap(false);
+		}
+		else
+		{
+			Driver::EnableOverlays(true);
+			Driver::EnableOverheadMap(true);
+		}
+		hideHUD = !hideHUD;
+	}
+
+	if (Input::KeyPressed(VK_MULTIPLY))
+	{
+		if (!photoMode)
+		{
+			//Driver::DrawHUD = false;
+			Driver::EnableOverlays(false);
+			Driver::EnableOverheadMap(false);
+			//Driver::SetTimescale(0.0);
+		}
+		else
+		{
+			//Driver::DrawHUD = true;
+			Driver::EnableOverlays(true);
+			Driver::EnableOverheadMap(true);
+			//Driver::RestoreTimescale();
+		}
+		photoMode = !photoMode;
 	}
 
 	std::wstring togglesStr = L"Toggles:\n\n";
@@ -225,8 +256,8 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	togglesStr.append(GetWStringForBool(infiniteMoney));
 	togglesStr.append(L"\n");
 
-	togglesStr.append(L"[-] HUD: ");
-	togglesStr.append(GetWStringForBool(Driver::DrawHUD));
+	togglesStr.append(L"[-] Hide HUD: ");
+	togglesStr.append(GetWStringForBool(hideHUD));
 	togglesStr.append(L"\n");
 
 	togglesStr.append(L"Skin: ");
@@ -258,6 +289,9 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 	actionsStr.append(L"\n");
 
 	actionsStr.append(L"[+] Heal Everyone");
+	actionsStr.append(L"\n");
+
+	actionsStr.append(L"[*] Photo Mode");
 	actionsStr.append(L"\n");
 
 	D3DCOLOR fontColor = D3DCOLOR_ARGB(255, 255, 255, 255);

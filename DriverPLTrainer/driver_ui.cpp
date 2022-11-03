@@ -9,9 +9,64 @@
 #define STRING_MAX_LENGTH 255
 #define CUSTOM_STRING_NOTIF_HOOK_OFFSET 0x72B63
 
-namespace Driver {
+#define HAMSTER_OVERLAY_SINGLETON_OFFSET 0x30C71C
+#define HAMSTER_ENABLEOVERLAYS_OFFSET 0xB754A
+#define HAMSTER_ENABLEOVERHEADMAP_OFFSET 0xB76D7
 
-	bool DrawHUD = true;
+namespace Driver {
+	char* EnableOverlaysAddr;
+	char* EnableOverheadMapAddr;
+
+	__declspec(naked) void enableOverlays(DWORD singleton, int enable)
+	{
+		__asm {
+			//Hamster overlay manager
+			mov ebx, [esp + 0x4]
+			mov ecx, [ebx]
+			//bool enable
+			mov ebx, [esp + 0x8]
+			push ebx
+			call EnableOverlaysAddr;
+			ret
+		}
+	}
+
+	__declspec(naked) void enableMap(DWORD singleton, int enable)
+	{
+		__asm {
+			//Hamster overlay manager
+			mov ebx, [esp + 0x4]
+			mov ecx, [ebx]
+			//bool enable
+			mov ebx, [esp + 0x8]
+			push ebx
+			call EnableOverheadMapAddr;
+			ret
+		}
+	}
+
+	bool OverheadMapEnabled()
+	{
+		char* overlayManager = (char*)((DWORD*)(modBase + HAMSTER_OVERLAY_SINGLETON_OFFSET))[0];
+		if (overlayManager == NULL)
+			return false;
+		char* minimap = (char*)((DWORD*)(overlayManager + 0x454))[0];
+		if (minimap == NULL)
+			return false;
+		return ((int*)(minimap + 0x76c))[0] > 0;
+	}
+
+	void EnableOverlays(bool enable)
+	{
+		EnableOverlaysAddr = modBase + HAMSTER_ENABLEOVERLAYS_OFFSET;
+		enableOverlays((DWORD)modBase + HAMSTER_OVERLAY_SINGLETON_OFFSET, enable ? 1 : 0);
+	}
+
+	void EnableOverheadMap(bool enable)
+	{
+		EnableOverheadMapAddr = modBase + HAMSTER_ENABLEOVERHEADMAP_OFFSET;
+		enableMap((DWORD)modBase + HAMSTER_OVERLAY_SINGLETON_OFFSET, enable ? 1 : 0);
+	}
 
 	//The way I'm getting this to work atm is a bit of a smelly hack, but shouldn't cause any issues.
 	char customString[STRING_MAX_LENGTH];

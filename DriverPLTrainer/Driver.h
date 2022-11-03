@@ -10,12 +10,18 @@ namespace Driver {
 
 	extern char* modBase;
 
-	/// <summary>
-	/// Should the in-game HUD be drawn?
-	/// </summary>
-	extern bool DrawHUD;
-
 	void Tick();
+
+	/// <summary>
+	/// Make the timescale a static value, regardless of any modifiers.
+	/// </summary>
+	/// <param name="timeScale">Time scale.</param>
+	void ForceTimescale(float timeScale);
+
+	/// <summary>
+	/// Restore the original timescale after using ForceTimescale.
+	/// </summary>
+	void RestoreTimescale();
 
 	/// <summary>
 	/// Sets the base module address and initializes the API.
@@ -24,6 +30,24 @@ namespace Driver {
 	void SetModuleBase(char* moduleBase);
 
 	class cUINotification;
+
+	/// <summary>
+	/// Check whether the minimap is enabled or disabled.
+	/// </summary>
+	/// <returns></returns>
+	bool OverheadMapEnabled();
+
+	/// <summary>
+	/// Enable or disable HUD overlays.
+	/// </summary>
+	/// <param name="enable"></param>
+	void EnableOverlays(bool enable);
+
+	/// <summary>
+	/// Enable or disable the minimap.
+	/// </summary>
+	/// <param name="enable"></param>
+	void EnableOverheadMap(bool enable);
 
 	/// <summary>
 	/// Displays UI notifications on the top half of the screen.

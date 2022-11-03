@@ -23,50 +23,77 @@
 #define GENERAL_UI_DRAW_HOOK_OFFSET 0x14FC40
 #define GENERAL_UI_DRAW_HOOK_JNE_OFFSET 0x14FC32
 
+#define TIMESCALE_STATIC_OFFSET 0x284124
+#define TIMESCALE_MUL_HOOK_OFFSET 0x6717E
+#define TIMESCALE_MOV_HOOK_OFFSET 0x671A7
+#define TIMESCALE_JB_HOOK_OFFSET 0x15A566
+
+#define TIMESCALE_JB_OFFSET 0x15A577
+
 namespace Driver {
-	char* GeneralUIJNE;
-	char* GeneralUIReturnDrawHook;
-	//Replacing 6 bytes in this one. Hook to skip drawing most UI if UI disabled.
-	__declspec(naked) void GeneralUIDrawHook()
+
+	bool fixedTimescale = false;
+
+	//5 bytes
+	char* FixedTimescaleReturnJBHook;
+	char* FixedTimescaleJBOffset;
+	__declspec(naked) void TimescaleJBHook()
 	{
 		__asm {
-			jne ElseLabel
-			jmp OutLabel
+			comiss xmm0, xmm3
+			jb TrueLabel
+			cmp fixedTimescale, 1
+			je TrueLabel
+			jmp FixedTimescaleReturnJBHook
 
-			OutLabel:
-				mov edi, ebx
-				lea esi,[ebp+0x0C]
-				jmp GeneralUIReturnDrawHook
-
-			ElseLabel:
-				cmp DrawHUD, 0
-				jne NotEqualLabel
-				jmp OutLabel
-
-			NotEqualLabel:
-				jmp GeneralUIJNE
+			TrueLabel:
+			jmp FixedTimescaleJBOffset
 		}
 	}
 
-	char* cUIMinimapReturnDrawHook;
-	//Replacing 6 bytes in this one. Hook to skip drawing minimap if UI disabled.
-	__declspec(naked) void cUIMinimapDrawHook()
+	//12 bytes
+	char* FixedTimescaleReturnMovHook;
+	char* TimescaleStaticAddress;
+	__declspec(naked) void TimescaleMovHook()
 	{
 		__asm {
-			cmp DrawHUD, 0
-			je TrueLabel
-			mov eax,[ebp+0x08]
-			cmp eax,[ebx+0x34]
-			jmp cUIMinimapReturnDrawHook
-
-			TrueLabel:
-			pop edi
-				pop esi
-				pop ebx
-				mov esp, ebp
-				pop ebp
-				ret 0x0004
+			mov eax, TimescaleStaticAddress
+			cmp fixedTimescale, 1
+			je TrueLeave
+			mulss xmm1, xmm0
+			movss [eax], xmm0
+			jmp FixedTimescaleReturnMovHook
+			TrueLeave:
+			movss xmm0, [eax]
+			jmp FixedTimescaleReturnMovHook
 		}
+	}
+
+	//5 bytes
+	char* FixedTimescaleReturnMulHook;
+	__declspec(naked) void TimescaleMulHook()
+	{
+		__asm {
+			push ecx
+			cmp fixedTimescale, 1
+			je TrueLeave
+			mulss xmm1, xmm0
+			jmp FixedTimescaleReturnMulHook
+
+			TrueLeave:
+			jmp FixedTimescaleReturnMulHook
+		}
+	}
+
+	void ForceTimescale(float timeScale) {
+		fixedTimescale = true;
+		Hooking::WriteToMemory((DWORD)modBase + TIMESCALE_STATIC_OFFSET, &timeScale, 4);
+	}
+
+	void RestoreTimescale() {
+		fixedTimescale = false;
+		float tScale = 1.0;
+		Hooking::WriteToMemory((DWORD)modBase + TIMESCALE_STATIC_OFFSET, &tScale, 4);
 	}
 
 	cUINotification* cUINotifSingleton;
@@ -175,6 +202,8 @@ namespace Driver {
 
 	void _stdcall onVehicleDtor(DWORD address)
 	{
+		if (cVehicleMap[address] == NULL)
+			return;
 		delete cVehicleMap[address];
 		cVehicleMap.erase(address);
 	}
@@ -396,12 +425,17 @@ namespace Driver {
 		
 		Hooking::MakeJMP((BYTE*)modBase + HANDLEDEATH_HOOK_OFFSET, (DWORD)cPedDeathGameOverHook, 9);
 
-		Hooking::MakeJMP((BYTE*)modBase + UI_MINIMAP_DRAW_HOOK_OFFSET, (DWORD)cUIMinimapDrawHook, 6);
-		cUIMinimapReturnDrawHook = (char*)((BYTE*)modBase + UI_MINIMAP_DRAW_HOOK_OFFSET + 6);
-		
-		Hooking::MakeJMP((BYTE*)modBase + GENERAL_UI_DRAW_HOOK_OFFSET, (DWORD)GeneralUIDrawHook, 7);
-		GeneralUIReturnDrawHook = (char*)((BYTE*)modBase + GENERAL_UI_DRAW_HOOK_OFFSET + 7);
-		GeneralUIJNE = (char*)((BYTE*)modBase + GENERAL_UI_DRAW_HOOK_JNE_OFFSET);
+		TimescaleStaticAddress = (char*)((BYTE*)modBase + TIMESCALE_STATIC_OFFSET);
+
+		Hooking::MakeJMP((BYTE*)modBase + TIMESCALE_MUL_HOOK_OFFSET, (DWORD)TimescaleMulHook, 5);
+		FixedTimescaleReturnMulHook = (char*)((BYTE*)modBase + TIMESCALE_MUL_HOOK_OFFSET + 5);
+
+		Hooking::MakeJMP((BYTE*)modBase + TIMESCALE_MOV_HOOK_OFFSET, (DWORD)TimescaleMovHook, 12);
+		FixedTimescaleReturnMovHook = (char*)((BYTE*)modBase + TIMESCALE_MOV_HOOK_OFFSET + 12);
+
+		Hooking::MakeJMP((BYTE*)modBase + TIMESCALE_JB_HOOK_OFFSET, (DWORD)TimescaleJBHook, 5);
+		FixedTimescaleReturnJBHook = (char*)((BYTE*)modBase + TIMESCALE_JB_HOOK_OFFSET + 5);
+		FixedTimescaleJBOffset = (char*)((BYTE*)modBase + TIMESCALE_JB_OFFSET);
 		/*
 		crashDamageJmp = modBase + 0x19D7EC;
 
