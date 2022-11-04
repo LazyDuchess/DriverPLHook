@@ -43,9 +43,9 @@ void DrawTxt(LPD3DXFONT font, LPCWSTR string, D3DCOLOR fontColor, int left, int 
 {
 	RECT rct; //Font
 	rct.left = left;
-	rct.right = 1920;
+	rct.right = Driver::cDisplay::GetResolution().width;
 	rct.top = top;
-	rct.bottom = rct.top + 1080;
+	rct.bottom = Driver::cDisplay::GetResolution().height;
 	font->DrawTextW(NULL, string, -1, &rct, 0, fontColor);
 }
 
@@ -238,6 +238,11 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 		photoMode = !photoMode;
 	}
 
+	if (Input::KeyPressed(VK_DIVIDE))
+	{
+		Driver::LockOn = !Driver::LockOn;
+	}
+
 	std::wstring togglesStr = L"Toggles:\n\n";
 
 	togglesStr.append(L"[Numpad 1] Never Wanted: ");
@@ -258,6 +263,10 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 
 	togglesStr.append(L"[-] Hide HUD: ");
 	togglesStr.append(GetWStringForBool(hideHUD));
+	togglesStr.append(L"\n");
+
+	togglesStr.append(L"[/] Auto Aim: ");
+	togglesStr.append(GetWStringForBool(Driver::LockOn));
 	togglesStr.append(L"\n");
 
 	togglesStr.append(L"Skin: ");

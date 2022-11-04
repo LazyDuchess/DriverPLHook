@@ -30,7 +30,45 @@
 
 #define TIMESCALE_JB_OFFSET 0x15A577
 
+#define LOCKON_HOOK_OFFSET 0xEA86D
+#define LOCKON_HOOK_JNE_OFFSET 0xEA87C
+#define LOCKON_HOOK_JMP_OFFSET 0xEA9BD
+
 namespace Driver {
+
+	bool LockOn = true;
+
+	char* LockOnJNEOffset;
+	char* LockOnJMPOffset;
+
+	//9 bytes
+	__declspec(naked) void lockOnHook()
+	{
+		__asm {
+			jne JNELabel
+			cmp LockOn, 1
+			jne DisabledLabel
+			cmp dword ptr[ebx + 0x000005C4], 0x00
+			je JumpLabel
+			jmp LockOnJNEOffset
+
+			JNELabel:
+			cmp LockOn, 1
+			je TrueLabel	
+				jmp DisabledLabel
+
+
+				TrueLabel:
+			jmp LockOnJNEOffset
+
+				DisabledLabel:
+			cmp dword ptr [ebx + 0x000005C4],0x00
+			jmp LockOnJMPOffset
+
+				JumpLabel:
+			jmp LockOnJMPOffset
+		}
+	}
 
 	bool fixedTimescale = false;
 
@@ -436,6 +474,12 @@ namespace Driver {
 		Hooking::MakeJMP((BYTE*)modBase + TIMESCALE_JB_HOOK_OFFSET, (DWORD)TimescaleJBHook, 5);
 		FixedTimescaleReturnJBHook = (char*)((BYTE*)modBase + TIMESCALE_JB_HOOK_OFFSET + 5);
 		FixedTimescaleJBOffset = (char*)((BYTE*)modBase + TIMESCALE_JB_OFFSET);
+
+
+		Hooking::MakeJMP((BYTE*)modBase + LOCKON_HOOK_OFFSET, (DWORD)lockOnHook, 9);
+		LockOnJNEOffset = (char*)((BYTE*)modBase + LOCKON_HOOK_JNE_OFFSET);
+		LockOnJMPOffset = (char*)((BYTE*)modBase + LOCKON_HOOK_JMP_OFFSET);
+
 		/*
 		crashDamageJmp = modBase + 0x19D7EC;
 

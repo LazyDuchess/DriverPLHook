@@ -8,6 +8,11 @@
 
 namespace Driver {
 
+	/// <summary>
+	/// Enable or disable the player lock on/auto-aim system.
+	/// </summary>
+	extern bool LockOn;
+
 	extern char* modBase;
 
 	void Tick();
@@ -48,6 +53,22 @@ namespace Driver {
 	/// </summary>
 	/// <param name="enable"></param>
 	void EnableOverheadMap(bool enable);
+
+	struct Resolution {
+	public:
+		int width;
+		int height;
+		Resolution(int width, int height);
+	};
+
+	static class cDisplay {
+	public:
+		/// <summary>
+		/// Get the current screen resolution.
+		/// </summary>
+		/// <returns>A resolution struct.</returns>
+		static Resolution GetResolution();
+	};
 
 	/// <summary>
 	/// Displays UI notifications on the top half of the screen.

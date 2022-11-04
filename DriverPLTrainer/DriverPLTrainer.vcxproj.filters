@@ -65,5 +65,8 @@
     <ClCompile Include="driver_ui.cpp">
       <Filter>Source Files\Driverhook</Filter>
     </ClCompile>
+    <ClCompile Include="driver_display.cpp">
+      <Filter>Source Files\Driverhook</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
