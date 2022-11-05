@@ -79,11 +79,64 @@ bool infiniteMoney = false;
 bool photoMode = false;
 bool hideHUD = false;
 
+//Was debugging something
+Driver::cPed* GetClosestCop(Driver::cPed* to)
+{
+	Driver::t_pedVector peds = Driver::cPed::GetPeds();
+	float lastDistance = 0.0;
+	Driver::cPed* lastPed = NULL;
+	for (auto& elem : peds)
+	{
+		if (elem != to && (elem->GetModel() == 56 || elem->GetModel() == 88) && elem->GetHealth() > 0.0 && elem->Spawned())
+		{
+			float dist = elem->GetPosition().Distance(to->GetPosition());
+			if (lastPed == NULL)
+			{
+				lastPed = elem;
+				lastDistance = dist;
+			}
+			else
+			{
+				if (dist < lastDistance)
+				{
+					lastPed = elem;
+					lastDistance = dist;
+				}
+			}
+		}
+	}
+	return lastPed;
+}
+
 void Draw(LPDIRECT3DDEVICE9 pDevice)
 {
 	Driver::cPed* playerPed = Driver::cPed::GetPlayer();
 	if (playerPed == NULL)
 		return;
+	
+	Driver::cUINotification* uiNotif = Driver::cUINotification::Get();
+	if (uiNotif != NULL)
+	{
+		Driver::cPed* cop = GetClosestCop(playerPed);
+		if (cop != NULL)
+		{
+			std::stringstream stream;
+			stream << std::hex << cop->address;
+			std::string result(stream.str());
+			std::string closestCopAddr = "Cop: 0x";
+			closestCopAddr.append(result);
+			closestCopAddr.append(" (");
+			Driver::Vector3 closestCopPos = cop->GetPosition();
+			closestCopAddr.append(std::to_string(closestCopPos.x).c_str());
+			closestCopAddr.append(", ");
+			closestCopAddr.append(std::to_string(closestCopPos.y).c_str());
+			closestCopAddr.append(", ");
+			closestCopAddr.append(std::to_string(closestCopPos.z).c_str());
+			closestCopAddr.append(")");
+			uiNotif->Show(closestCopAddr.c_str());
+		}
+	}
+
 	if (Input::KeyPressed(VK_F10))
 	{
 		if (m_font != NULL)
@@ -178,8 +231,6 @@ void Draw(LPDIRECT3DDEVICE9 pDevice)
 			playerPed->GetVehicle()->Repair();
 		}
 	}
-
-	Driver::cUINotification* uiNotif = Driver::cUINotification::Get();
 
 	if (Input::KeyPressed(VK_NUMPAD0))
 	{
@@ -343,6 +394,19 @@ void Update()
 		*/
 	if (playerPed != NULL)
 	{
+		/*
+		Driver::cUINotification* uiNotif = Driver::cUINotification::Get();
+		if (uiNotif != NULL)
+		{
+			std::string playerPosStr = "Player X: ";
+			Driver::Vector3 pos = playerPed->GetPosition();
+			playerPosStr.append(std::to_string(pos.x));
+			playerPosStr.append(", Y: ");
+			playerPosStr.append(std::to_string(pos.y));
+			playerPosStr.append(", Z: ");
+			playerPosStr.append(std::to_string(pos.z));
+			uiNotif->Show(playerPosStr.c_str());
+		}*/
 		//No car damage
 		if (playerPed->InVehicle())
 		{
@@ -376,10 +440,10 @@ void Update()
 		{
 			//No dying
 			playerPed->SetHealth(2.0);
-			playerPed->HandleDeath = false;
+			//playerPed->HandleDeath = false;
 		}
-		else
-			playerPed->HandleDeath = true;
+		//else
+			//playerPed->HandleDeath = true;
 	}
 }
 

@@ -12,13 +12,13 @@
 
 #define WANTED_POINTER 0x0030C5C8
 
-#define WANTED_WANTED_OFFSET 0x24
-#define WANTED_WANTED_OFFSET2 0x20
+#define WANTED_WANTED_OFFSET 0x20
+#define WANTED_WANTED_OFFSET2 0x24
 #define WANTED_SUS_OFFSET 0x28
 #define WANTED_ENGAGING_OFFSET 0x39
 #define WANTED_HIDDEN_OFFSET 0x3C
 #define WANTED_SUSPECTING_OFFSET 0x3B
-#define WANTED_ALERT_OFFSET 0x1C
+#define WANTED_VEHICLE_OFFSET 0x1C
 
 namespace Driver {
 
@@ -28,6 +28,23 @@ namespace Driver {
 		modBase = moduleBase;
 		srand(time(NULL));
 		InitializeHooks();
+	}
+
+	Vector3::Vector3(float x, float y, float z)
+	{
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
+
+	float Vector3::Distance(Driver::Vector3 otherVec)
+	{
+		return hypot(hypot(x - otherVec.x, y - otherVec.y), z - otherVec.z);
+	}
+
+	Vector3 Vector3::Add(Driver::Vector3 otherVec)
+	{
+		return Vector3(x + otherVec.x, y + otherVec.y, z + otherVec.z);
 	}
 
 	Color::Color(float r, float g, float b)
@@ -63,9 +80,9 @@ namespace Driver {
 		return NULL;
 	}
 
-	float cWanted::GetAlert()
+	float cWanted::GetVehicle()
 	{
-		return ((float*)(address + WANTED_ALERT_OFFSET))[0];
+		return ((float*)(address + WANTED_VEHICLE_OFFSET))[0];
 	}
 
 	float cWanted::GetSuspicionLevel()
@@ -76,6 +93,11 @@ namespace Driver {
 	float cWanted::GetWantedLevel()
 	{
 		return ((float*)(address + WANTED_WANTED_OFFSET))[0];
+	}
+
+	float cWanted::GetWantedDelta()
+	{
+		return ((float*)(address + WANTED_WANTED_OFFSET2))[0];
 	}
 
 	bool cWanted::GetEngaging()
@@ -96,15 +118,16 @@ namespace Driver {
 	void cWanted::ClearWantedLevel() {
 		SetSuspicionLevel(0.0);
 		SetWantedLevel(0.0);
+		SetWantedDelta(0.0);
 		//SetHidden(false);
 		SetEngaging(false);
 		SetSuspecting(false);
-		SetAlert(0.0);
+		SetVehicle(0.0);
 	}
 
-	void cWanted::SetAlert(float alert)
+	void cWanted::SetVehicle(float vehicle)
 	{
-		((float*)(address + WANTED_ALERT_OFFSET))[0] = alert;
+		((float*)(address + WANTED_VEHICLE_OFFSET))[0] = vehicle;
 	}
 
 	void cWanted::SetSuspicionLevel(float level)
@@ -115,7 +138,11 @@ namespace Driver {
 	void cWanted::SetWantedLevel(float level)
 	{
 		((float*)(address + WANTED_WANTED_OFFSET))[0] = level;
-		((float*)(address + WANTED_WANTED_OFFSET2))[0] = level;
+	}
+
+	void cWanted::SetWantedDelta(float delta)
+	{
+		((float*)(address + WANTED_WANTED_OFFSET2))[0] = delta;
 	}
 
 	void cWanted::SetEngaging(bool engaging)

@@ -54,6 +54,16 @@ namespace Driver {
 	/// <param name="enable"></param>
 	void EnableOverheadMap(bool enable);
 
+	struct Vector3 {
+	public:
+		float x;
+		float y;
+		float z;
+		Vector3(float x, float y, float z);
+		float Distance(Vector3 otherVec);
+		Vector3 Add(Vector3 otherVec);
+	};
+
 	struct Resolution {
 	public:
 		int width;
@@ -138,19 +148,21 @@ namespace Driver {
 
 		float GetSuspicionLevel();
 		float GetWantedLevel();
+		float GetWantedDelta();
 		bool GetEngaging();
 		bool GetHidden();
 		bool GetSuspecting();
-		float GetAlert();
+		float GetVehicle();
 
 		void ClearWantedLevel();
 
 		void SetSuspicionLevel(float level);
 		void SetWantedLevel(float level);
+		void SetWantedDelta(float delta);
 		void SetEngaging(bool engaging);
 		void SetHidden(bool hidden);
 		void SetSuspecting(bool suspecting);
-		void SetAlert(float alert);
+		void SetVehicle(float vehicle);
 
 		cWanted(DWORD addr);
 	private:
@@ -166,6 +178,21 @@ namespace Driver {
 	/// </summary>
 	class cPed {
 	public:
+
+		void SetAllowGetOutOfVehicle(bool allow);
+		bool GetAllowGetOutOfVehicle();
+		void SetAllowWeapons(bool allow);
+		bool GetAllowWeapons();
+		void SetDamageMultiplier(float multiplier);
+		float GetDamageMultiplier();
+
+		/// <summary>
+		/// Check whether the character is actually spawned in the world.
+		/// </summary>
+		/// <returns></returns>
+		bool Spawned();
+		void SetPosition(Vector3 position);
+		Vector3 GetPosition();
 		float GetHealth();
 		bool InVehicle();
 		cVehicle* GetVehicle();

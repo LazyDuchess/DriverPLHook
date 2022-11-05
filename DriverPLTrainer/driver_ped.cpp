@@ -14,7 +14,15 @@
 #define INCAR_OFFSET 0xFC
 #define CAR_OFFSET 0x688
 
+#define DAMAGEMULT_OFFSET 0x77C
+#define ALLOW_WEAPONS_OFFSET 0x7A5
+#define ALLOW_GETOUT_VEHICLE_OFFSET 0x7A6
+
 #define PED_DAMAGE_FUNC 0xEC5DD
+
+#define X_OFFSET 0x40
+#define Y_OFFSET (X_OFFSET + 0x4)
+#define Z_OFFSET (Y_OFFSET + 0x4)
 
 namespace Driver {
 
@@ -28,6 +36,51 @@ namespace Driver {
 	cPed::cPed()
 	{
 		address = NULL;
+	}
+
+	void cPed::SetAllowGetOutOfVehicle(bool allow)
+	{
+		((char*)(address + ALLOW_GETOUT_VEHICLE_OFFSET))[0] = allow ? 1 : 0;
+	}
+
+	bool cPed::GetAllowGetOutOfVehicle()
+	{
+		return (((char*)(address + ALLOW_GETOUT_VEHICLE_OFFSET))[0] == 1);
+	}
+
+	void cPed::SetAllowWeapons(bool allow)
+	{
+		((char*)(address + ALLOW_WEAPONS_OFFSET))[0] = allow ? 1 : 0;
+	}
+
+	bool cPed::GetAllowWeapons()
+	{
+		return (((char*)(address + ALLOW_WEAPONS_OFFSET))[0] == 1);
+	}
+
+	void cPed::SetDamageMultiplier(float multiplier)
+	{
+		((float*)(address + DAMAGEMULT_OFFSET))[0] = multiplier;
+	}
+
+	float cPed::GetDamageMultiplier()
+	{
+		return ((float*)(address + DAMAGEMULT_OFFSET))[0];
+	}
+
+	void cPed::SetPosition(Vector3 position)
+	{
+		((float*)(address + X_OFFSET))[0] = position.x;
+		((float*)(address + Y_OFFSET))[0] = position.y;
+		((float*)(address + Z_OFFSET))[0] = position.z;
+	}
+
+	Vector3 cPed::GetPosition()
+	{
+		float x = ((float*)(address + X_OFFSET))[0];
+		float y = ((float*)(address + Y_OFFSET))[0];
+		float z = ((float*)(address + Z_OFFSET))[0];
+		return Vector3(x, y, z);
 	}
 
 	char* damageFuncAddr;
@@ -84,6 +137,13 @@ namespace Driver {
 		if (vehicleAddress == NULL)
 			return false;
 		return true;
+	}
+
+	//This function below may or may not be accurate. Still need to figure it out proper.
+	bool cPed::Spawned()
+	{
+		//return (((int*)(address + 0x680))[0] != 0 && ((int*)(address + 0x674))[0] != 0);
+		return (((int*)(address + 0x674))[0] != 0);
 	}
 
 	float cPed::GetHealth()

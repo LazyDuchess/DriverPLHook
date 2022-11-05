@@ -17,6 +17,10 @@
 //VTABLE
 #define VEHICLE_VTABLE_REPAIR 0x38
 
+#define X_OFFSET 0x80
+#define Y_OFFSET (X_OFFSET + 0x4)
+#define Z_OFFSET (Y_OFFSET + 0x4)
+
 namespace Driver {
 
 	void cVehicle::SetColor(Color color)
